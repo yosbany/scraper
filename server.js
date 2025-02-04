@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { connectAndLogin, getStockWithSession } = require("./browserlessStock");
+const { connectAndLogin, getStockWithSession } = require("./puppeteerService");
 
 const app = express();
 const port = process.env.PORT || 5000;
