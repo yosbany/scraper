@@ -1,29 +1,24 @@
-const chromium = require("chrome-aws-lambda");
 const puppeteer = require("puppeteer-core");
 
 async function getStock(articleCode) {
     let browser = null;
 
     try {
-        console.log("🔵 Iniciando Puppeteer con chrome-aws-lambda...");
+        console.log("🔵 Conectando a Browserless...");
 
-        // Intentar obtener la ruta del navegador
-        const executablePath = await chromium.executablePath;
-
-        if (!executablePath) {
-            throw new Error("🔴 Chromium no se encuentra en el entorno de ejecución.");
+        // Obtener el token desde la variable de entorno
+        const browserlessToken = process.env.BROWSERLESS_TOKEN;
+        if (!browserlessToken) {
+            throw new Error("❌ No se encontró la variable de entorno BROWSERLESS_TOKEN.");
         }
 
-        browser = await puppeteer.launch({
-            args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
-            executablePath: executablePath,
-            headless: chromium.headless,
-            ignoreHTTPSErrors: true,
-            defaultViewport: chromium.defaultViewport,
+        // Conectar a Browserless usando el token de la variable de entorno
+        browser = await puppeteer.connect({
+            browserWSEndpoint: `wss://chrome.browserless.io?token=${browserlessToken}`,
         });
 
         const page = await browser.newPage();
-        console.log(`🟢 Navegador iniciado correctamente. Buscando stock para: ${articleCode}`);
+        console.log(`🟢 Conectado correctamente. Buscando stock para: ${articleCode}`);
 
         await page.goto("https://go.zureo.com/", { waitUntil: "networkidle2" });
 
