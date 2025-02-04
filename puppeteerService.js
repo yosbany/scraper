@@ -1,9 +1,12 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-core");
+const chromium = require("chrome-aws-lambda");
 
 async function getStock(articleCode) {
     const browser = await puppeteer.launch({
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        headless: "new" // Usar el nuevo modo Headless para Chrome
+        args: chromium.args,
+        executablePath: await chromium.executablePath || "/usr/bin/chromium-browser",
+        headless: true,
+        ignoreHTTPSErrors: true,
     });
 
     const page = await browser.newPage();
