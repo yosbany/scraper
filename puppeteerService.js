@@ -2,24 +2,28 @@ const chromium = require("chrome-aws-lambda");
 const puppeteer = require("puppeteer-core");
 
 async function getStock(articleCode) {
-    const executablePath = await chromium.executablePath;
-
-    if (!executablePath) {
-        throw new Error("Chrome no se encuentra en Render. Verifica la instalación de chrome-aws-lambda.");
-    }
-
-    const browser = await puppeteer.launch({
-        args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
-        defaultViewport: chromium.defaultViewport,
-        executablePath: executablePath, // Forzar el uso del ejecutable de chrome-aws-lambda
-        headless: chromium.headless,
-        ignoreHTTPSErrors: true,
-    });
-
-    const page = await browser.newPage();
+    let browser = null;
 
     try {
-        console.log(`Buscando el stock para el artículo: ${articleCode}`);
+        console.log("🔵 Iniciando Puppeteer con chrome-aws-lambda...");
+
+        // Intentar obtener la ruta del navegador
+        const executablePath = await chromium.executablePath;
+
+        if (!executablePath) {
+            throw new Error("🔴 Chromium no se encuentra en el entorno de ejecución.");
+        }
+
+        browser = await puppeteer.launch({
+            args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
+            executablePath: executablePath,
+            headless: chromium.headless,
+            ignoreHTTPSErrors: true,
+            defaultViewport: chromium.defaultViewport,
+        });
+
+        const page = await browser.newPage();
+        console.log(`🟢 Navegador iniciado correctamente. Buscando stock para: ${articleCode}`);
 
         await page.goto("https://go.zureo.com/", { waitUntil: "networkidle2" });
 
@@ -33,7 +37,7 @@ async function getStock(articleCode) {
             await page.waitForSelector('button.z-btn.btn-primary', { timeout: 5000 });
             await page.click('button.z-btn.btn-primary');
         } catch {
-            console.log("El mensaje 'Continuar' no apareció. Continuando...");
+            console.log("⚠️ No apareció el mensaje 'Continuar'. Procediendo...");
         }
 
         await page.goto("https://go.zureo.com/#/informes/stockarticulo", { waitUntil: "networkidle2" });
@@ -54,13 +58,15 @@ async function getStock(articleCode) {
             return stockElement ? parseFloat(stockElement.innerText.trim().replace(',', '.')) : null;
         });
 
-        console.log(`Stock encontrado: ${stock}`);
+        console.log(`✅ Stock encontrado: ${stock}`);
         return stock;
     } catch (error) {
-        console.error("Error en el scraping:", error.message);
+        console.error("❌ Error en el scraping:", error.message);
         return null;
     } finally {
-        await browser.close();
+        if (browser) {
+            await browser.close();
+        }
     }
 }
 
