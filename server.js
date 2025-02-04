@@ -10,7 +10,19 @@ app.use(cors()); // Habilita CORS para evitar restricciones en el frontend
 let browserInstance = null;
 let pageInstance = null;
 
-// 🔹 Ruta para iniciar sesión en Zureo y obtener una sesión
+// 🔹 Ruta principal para verificar que la API está funcionando
+app.get("/", (req, res) => {
+    res.send(`
+        🚀 API de Zureo Scraping en Railway. <br>
+        <b>Endpoints disponibles:</b> <br>
+        🔹 <b>/auth</b> - Inicia sesión en Zureo y mantiene la sesión. <br>
+        🔹 <b>/stock/:articleCodes</b> - Consulta el stock de varios artículos. <br>
+        <br>
+        <b>Ejemplo:</b> <a href='/stock/P1602,P0999'>/stock/P1602,P0999</a>
+    `);
+});
+
+// 🔹 Ruta para iniciar sesión en Zureo y obtener una sesión activa
 app.get("/auth", async (req, res) => {
     try {
         if (!browserInstance || !pageInstance) {
@@ -21,7 +33,7 @@ app.get("/auth", async (req, res) => {
         } else {
             console.log("✅ Usando sesión existente.");
         }
-        
+
         res.json({ message: "Sesión iniciada correctamente", sessionActive: true });
     } catch (error) {
         console.error("❌ Error al iniciar sesión:", error.message);
@@ -39,9 +51,8 @@ app.get("/stock/:articleCodes", async (req, res) => {
 
     try {
         console.log(`🔍 Consultando stock para: ${articleCodes}`);
-
         const stocks = await getStockWithSession(pageInstance, articleCodes);
-        
+
         res.json({ stocks });
     } catch (error) {
         console.error("❌ Error en la consulta de stock:", error.message);
@@ -49,7 +60,7 @@ app.get("/stock/:articleCodes", async (req, res) => {
     }
 });
 
-// Iniciar el servidor
+// Iniciar el servidor en el puerto dinámico de Railway
 app.listen(port, () => {
     console.log(`🚀 Servidor ejecutándose en http://localhost:${port}`);
 });
