@@ -1,11 +1,12 @@
-const puppeteer = require("puppeteer-core");
 const chromium = require("chrome-aws-lambda");
+const puppeteer = require("puppeteer-core");
 
 async function getStock(articleCode) {
     const browser = await puppeteer.launch({
-        args: chromium.args,
-        executablePath: await chromium.executablePath || "/usr/bin/chromium-browser",
-        headless: true,
+        args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath,
+        headless: chromium.headless,
         ignoreHTTPSErrors: true,
     });
 
