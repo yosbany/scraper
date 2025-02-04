@@ -2,10 +2,16 @@ const chromium = require("chrome-aws-lambda");
 const puppeteer = require("puppeteer-core");
 
 async function getStock(articleCode) {
+    const executablePath = await chromium.executablePath;
+
+    if (!executablePath) {
+        throw new Error("Chrome no se encuentra en Render. Verifica la instalación de chrome-aws-lambda.");
+    }
+
     const browser = await puppeteer.launch({
         args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath,
+        executablePath: executablePath, // Forzar el uso del ejecutable de chrome-aws-lambda
         headless: chromium.headless,
         ignoreHTTPSErrors: true,
     });
