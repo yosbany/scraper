@@ -75,27 +75,38 @@ async function getStockWithSession(page, articleCodes) {
     for (let articleCode of articleCodes) {
         console.log(`🔍 Buscando stock para: ${articleCode}`);
 
-        // Buscar el artículo en el campo de búsqueda
+        // 🔹 Esperar a que el campo de búsqueda esté listo
         await page.waitForSelector('input[placeholder="Buscar..."]', { timeout: 8000 });
-        await page.evaluate((code) => {
-            const input = document.querySelector('input[placeholder="Buscar..."]');
-            if (input) {
-                input.value = code;
-                input.dispatchEvent(new Event("input", { bubbles: true }));
-            }
-        }, articleCode);
 
-        // Seleccionar el primer resultado de la lista
-        await page.waitForSelector('li.uib-typeahead-match a', { timeout: 5000 });
+        // 🔹 Limpiar el input antes de escribir el nuevo código
         await page.evaluate(() => {
-            document.querySelector('li.uib-typeahead-match a').click();
+            const input = document.querySelector('input[placeholder="Buscar..."]');
+            input.value = "";
+            input.dispatchEvent(new Event("input", { bubbles: true }));
         });
 
-        // Consultar stock
+        // 🔹 Insertar el código del artículo en el campo de búsqueda
+        await page.type('input[placeholder="Buscar..."]', articleCode);
+        
+        // 🔹 Esperar a que la lista de resultados aparezca completamente
+        await page.waitForSelector('li.uib-typeahead-match a', { timeout: 5000 });
+
+        // 🔹 Asegurar que el elemento sea clickeable antes de interactuar
+        const firstResult = await page.$('li.uib-typeahead-match a');
+        if (firstResult) {
+            await firstResult.click();
+            console.log(`✅ Seleccionado artículo: ${articleCode}`);
+        } else {
+            console.error(`❌ No se encontró un resultado para el artículo ${articleCode}`);
+            stockResults[articleCode] = null;
+            continue; // Saltar a la siguiente consulta
+        }
+
+        // 🔹 Consultar stock
         await page.waitForSelector('#consultar', { timeout: 5000 });
         await page.click('#consultar');
 
-        // Obtener el stock
+        // 🔹 Obtener el stock del artículo
         await page.waitForSelector('h1.z-heading.m-n.ng-binding', { timeout: 8000 });
         const stock = await page.evaluate(() => {
             const stockElement = document.querySelector('h1.z-heading.m-n.ng-binding');
@@ -105,7 +116,7 @@ async function getStockWithSession(page, articleCodes) {
         console.log(`✅ Stock para ${articleCode}: ${stock}`);
         stockResults[articleCode] = stock;
 
-        // Esperar un momento antes de la siguiente consulta
+        // 🔹 Esperar 2 segundos antes de la siguiente consulta para evitar bloqueos
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
