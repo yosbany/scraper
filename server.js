@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { connectAndLogin, getStockWithSession } = require("./browserlessStock");
+const { connectAndLogin, getStockWithSession } = require("./puppeteerService");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -31,10 +31,15 @@ app.get("/", (req, res) => {
         </a>
 
         <h3>2️⃣ Paso 2: Consultar stock</h3>
-        <p>Después de autenticarse, usa este enlace para consultar stock de un artículo:</p>
-        <a href="/stock/P1602" target="_blank">
-            <button>📦 Consultar Stock de P1602</button>
-        </a>
+        <p>Después de autenticarse, usa estos enlaces para consultar stock de algunos artículos:</p>
+        
+        <ul>
+            <li><a href="/stock/P1602" target="_blank"><button>📦 Consultar Stock de P1602</button></a></li>
+            <li><a href="/stock/P0999" target="_blank"><button>📦 Consultar Stock de P0999</button></a></li>
+            <li><a href="/stock/P2500" target="_blank"><button>📦 Consultar Stock de P2500</button></a></li>
+            <li><a href="/stock/P3201" target="_blank"><button>📦 Consultar Stock de P3201</button></a></li>
+            <li><a href="/stock/P4507" target="_blank"><button>📦 Consultar Stock de P4507</button></a></li>
+        </ul>
 
         <p><b>⚠️ Nota:</b> Primero debes llamar a <b>/auth</b> antes de consultar el stock.</p>
     `);
