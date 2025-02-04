@@ -10,15 +10,33 @@ app.use(cors()); // Habilita CORS para evitar restricciones en el frontend
 let browserInstance = null;
 let pageInstance = null;
 
-// 🔹 Ruta principal para verificar que la API está funcionando
+// 🔹 Ruta principal con ejemplos interactivos
 app.get("/", (req, res) => {
     res.send(`
-        🚀 API de Zureo Scraping en Railway. <br>
-        <b>Endpoints disponibles:</b> <br>
-        🔹 <b>/auth</b> - Inicia sesión en Zureo y mantiene la sesión. <br>
-        🔹 <b>/stock/:articleCodes</b> - Consulta el stock de varios artículos. <br>
-        <br>
-        <b>Ejemplo:</b> <a href='/stock/P1602,P0999'>/stock/P1602,P0999</a>
+        <h1>🚀 API de Zureo Scraping en Railway</h1>
+        <p>Esta API permite autenticar en Zureo y consultar stock de artículos usando una sesión persistente.</p>
+
+        <h2>🔹 Rutas disponibles:</h2>
+        <ul>
+            <li><b>/auth</b> - Inicia sesión en Zureo y mantiene la sesión activa.</li>
+            <li><b>/stock/:articleCodes</b> - Consulta el stock de varios artículos usando la misma sesión.</li>
+        </ul>
+
+        <h2>🔍 Ejemplos de uso:</h2>
+
+        <h3>1️⃣ Paso 1: Iniciar sesión</h3>
+        <p>Haz clic en este enlace para autenticar en Zureo:</p>
+        <a href="/auth" target="_blank">
+            <button>🔑 Iniciar Sesión en Zureo</button>
+        </a>
+
+        <h3>2️⃣ Paso 2: Consultar stock</h3>
+        <p>Después de autenticarse, usa este enlace para consultar stock de múltiples artículos:</p>
+        <a href="/stock/P1602,P0999" target="_blank">
+            <button>📦 Consultar Stock de P1602 y P0999</button>
+        </a>
+
+        <p><b>⚠️ Nota:</b> Primero debes llamar a <b>/auth</b> antes de consultar el stock.</p>
     `);
 });
 
