@@ -18,14 +18,14 @@ app.get("/", (req, res) => {
 
         <h2>🔹 Rutas disponibles:</h2>
         <ul>
-            <li><b>/auth</b> - Inicia sesión en Zureo y mantiene la sesión activa.</li>
+            <li><b>/auth</b> - Inicia sesión en Zureo y genera una nueva sesión.</li>
             <li><b>/stock/:articleCode</b> - Consulta el stock de <b>un solo artículo</b> usando la misma sesión.</li>
         </ul>
 
         <h2>🔍 Ejemplos de uso:</h2>
 
         <h3>1️⃣ Paso 1: Iniciar sesión</h3>
-        <p>Haz clic en este enlace para autenticar en Zureo:</p>
+        <p>Haz clic en este enlace para autenticar en Zureo (siempre crea una nueva sesión):</p>
         <a href="/auth" target="_blank">
             <button>🔑 Iniciar Sesión en Zureo</button>
         </a>
@@ -45,26 +45,30 @@ app.get("/", (req, res) => {
     `);
 });
 
-// 🔹 Ruta para iniciar sesión en Zureo y obtener una sesión activa
+// 🔹 Ruta para iniciar sesión en Zureo y generar una NUEVA sesión cada vez que se llame
 app.get("/auth", async (req, res) => {
     try {
-        if (!browserInstance || !pageInstance) {
-            console.log("🔵 Iniciando nueva sesión en Zureo...");
-            const { browser, page } = await connectAndLogin();
-            browserInstance = browser;
-            pageInstance = page;
-        } else {
-            console.log("✅ Usando sesión existente.");
+        // 🛑 Cerrar la sesión anterior antes de crear una nueva para evitar conflictos
+        if (browserInstance) {
+            console.log("🛑 Cerrando sesión anterior...");
+            await browserInstance.close();
+            browserInstance = null;
+            pageInstance = null;
         }
 
-        res.json({ message: "Sesión iniciada correctamente", sessionActive: true });
+        console.log("🔵 Iniciando nueva sesión en Zureo...");
+        const { browser, page } = await connectAndLogin();
+        browserInstance = browser;
+        pageInstance = page;
+
+        res.json({ message: "Nueva sesión iniciada correctamente", sessionActive: true });
     } catch (error) {
         console.error("❌ Error al iniciar sesión:", error.message);
         res.status(500).json({ error: "Error al iniciar sesión en Zureo" });
     }
 });
 
-// 🔹 Ruta para obtener stock de UN SOLO artículo con la misma sesión
+// 🔹 Ruta para obtener stock de UN SOLO artículo con la sesión activa
 app.get("/stock/:articleCode", async (req, res) => {
     const articleCode = req.params.articleCode;
 
