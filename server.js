@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { connectAndLogin, getStockWithSession } = require("./puppeteerService");
+const { connectAndLogin, getStockWithSession } = require("./browserlessStock");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -19,7 +19,7 @@ app.get("/", (req, res) => {
         <h2>🔹 Rutas disponibles:</h2>
         <ul>
             <li><b>/auth</b> - Inicia sesión en Zureo y mantiene la sesión activa.</li>
-            <li><b>/stock/:articleCodes</b> - Consulta el stock de varios artículos usando la misma sesión.</li>
+            <li><b>/stock/:articleCode</b> - Consulta el stock de <b>un solo artículo</b> usando la misma sesión.</li>
         </ul>
 
         <h2>🔍 Ejemplos de uso:</h2>
@@ -31,9 +31,9 @@ app.get("/", (req, res) => {
         </a>
 
         <h3>2️⃣ Paso 2: Consultar stock</h3>
-        <p>Después de autenticarse, usa este enlace para consultar stock de múltiples artículos:</p>
-        <a href="/stock/P1602,P0999" target="_blank">
-            <button>📦 Consultar Stock de P1602 y P0999</button>
+        <p>Después de autenticarse, usa este enlace para consultar stock de un artículo:</p>
+        <a href="/stock/P1602" target="_blank">
+            <button>📦 Consultar Stock de P1602</button>
         </a>
 
         <p><b>⚠️ Nota:</b> Primero debes llamar a <b>/auth</b> antes de consultar el stock.</p>
@@ -59,19 +59,19 @@ app.get("/auth", async (req, res) => {
     }
 });
 
-// 🔹 Ruta para obtener stock de múltiples artículos con la misma sesión
-app.get("/stock/:articleCodes", async (req, res) => {
-    const articleCodes = req.params.articleCodes.split(",");
+// 🔹 Ruta para obtener stock de UN SOLO artículo con la misma sesión
+app.get("/stock/:articleCode", async (req, res) => {
+    const articleCode = req.params.articleCode;
 
     if (!browserInstance || !pageInstance) {
         return res.status(400).json({ error: "No hay una sesión activa. Primero llama a /auth" });
     }
 
     try {
-        console.log(`🔍 Consultando stock para: ${articleCodes}`);
-        const stocks = await getStockWithSession(pageInstance, articleCodes);
+        console.log(`🔍 Consultando stock para: ${articleCode}`);
+        const stocks = await getStockWithSession(pageInstance, [articleCode]); // Solo un código
 
-        res.json({ stocks });
+        res.json({ articleCode, stock: stocks[articleCode] });
     } catch (error) {
         console.error("❌ Error en la consulta de stock:", error.message);
         res.status(500).json({ error: "Error interno del servidor" });
