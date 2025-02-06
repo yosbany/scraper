@@ -48,12 +48,18 @@ app.get("/", (req, res) => {
 // 🔹 Ruta para iniciar sesión en Zureo y generar una NUEVA sesión cada vez que se llame
 app.get("/auth", async (req, res) => {
     try {
-        // 🛑 Cerrar la sesión anterior antes de crear una nueva para evitar conflictos
+         // 🛑 Cerrar la sesión anterior antes de crear una nueva para evitar conflictos
         if (browserInstance) {
-            console.log("🛑 Cerrando sesión anterior...");
-            await browserInstance.close();
-            browserInstance = null;
-            pageInstance = null;
+            console.log("🛑 Intentando cerrar la sesión anterior...");
+            try {
+                browserInstance.disconnect(); // Forzar desconexión inmediata
+                await browserInstance.close(); // Cierre limpio
+            } catch (err) {
+                console.error("⚠️ Error al cerrar la sesión anterior:", err.message);
+            } finally {
+                browserInstance = null;
+                pageInstance = null;
+            }
         }
 
         console.log("🔵 Iniciando nueva sesión en Zureo...");
