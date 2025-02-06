@@ -1,0 +1,1 @@
+git add . && git commit -m "Actualización del script" && git push origin main

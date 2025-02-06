@@ -48,21 +48,12 @@ app.get("/", (req, res) => {
 // 🔹 Ruta para iniciar sesión en Zureo y generar una NUEVA sesión cada vez que se llame
 app.get("/auth", async (req, res) => {
     try {
-         // 🛑 Cerrar la sesión anterior antes de crear una nueva para evitar conflictos
-        if (browserInstance) {
-            console.log("🛑 Intentando cerrar la sesión anterior...");
-            try {
-                browserInstance.disconnect(); // Forzar desconexión inmediata
-                await browserInstance.close(); // Cierre limpio
-            } catch (err) {
-                console.error("⚠️ Error al cerrar la sesión anterior:", err.message);
-            } finally {
-                browserInstance = null;
-                pageInstance = null;
-            }
+        if (browserInstance && pageInstance) {
+            console.log("✅ Sesión activa, reutilizando...");
+            return res.json({ message: "Sesión activa", sessionActive: true });
         }
 
-        console.log("🔵 Iniciando nueva sesión en Zureo...");
+        console.log("🔵 No hay sesión activa, iniciando una nueva sesión en Zureo...");
         const { browser, page } = await connectAndLogin();
         browserInstance = browser;
         pageInstance = page;
@@ -78,18 +69,32 @@ app.get("/auth", async (req, res) => {
 app.get("/stock/:articleCode", async (req, res) => {
     const articleCode = req.params.articleCode;
 
-    if (!browserInstance || !pageInstance) {
-        return res.status(400).json({ error: "No hay una sesión activa. Primero llama a /auth" });
-    }
-
     try {
+        if (!browserInstance || !pageInstance) {
+            console.log("⚠️ No hay sesión activa, intentando iniciar una nueva...");
+            const { browser, page } = await connectAndLogin();
+            browserInstance = browser;
+            pageInstance = page;
+        }
+
         console.log(`🔍 Consultando stock para: ${articleCode}`);
         const stocks = await getStockWithSession(pageInstance, [articleCode]); // Solo un código
 
         res.json({ articleCode, stock: stocks[articleCode] });
     } catch (error) {
-        console.error("❌ Error en la consulta de stock:", error.message);
-        res.status(500).json({ error: "Error interno del servidor" });
+        console.error("❌ Error en la consulta de stock, intentando reabrir sesión...", error.message);
+        try {
+            console.log("🔄 Intentando reiniciar la sesión...");
+            const { browser, page } = await connectAndLogin();
+            browserInstance = browser;
+            pageInstance = page;
+            console.log(`🔍 Reintentando consulta para: ${articleCode}`);
+            const stocks = await getStockWithSession(pageInstance, [articleCode]);
+            res.json({ articleCode, stock: stocks[articleCode] });
+        } catch (retryError) {
+            console.error("❌ Falló el reintento de consulta de stock:", retryError.message);
+            res.status(500).json({ error: "Error interno del servidor tras reintento" });
+        }
     }
 });
 
